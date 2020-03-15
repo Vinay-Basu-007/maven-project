@@ -1,44 +1,42 @@
-pipeline{
-
+pipeline {
     agent any
-    stages{
-        stage('build'){
-            steps{
-                echo "building..."
-                bat 'mvn clean package'
+
+    parameters {
+         string(name: 'tomcat_dev', defaultValue: '34.207.168.241', description: 'Staging Server')
+         string(name: 'tomcat_prod', defaultValue: '54.197.208.42', description: 'Production Server')
+    }
+
+    triggers {
+         pollSCM('* * * * *')
+     }
+
+stages{
+        stage('Build'){
+            steps {
+                sh 'mvn clean package'
             }
-            post{
-                success{
-                    echo "Now Archiving"
+            post {
+                success {
+                    echo 'Now Archiving...'
                     archiveArtifacts artifacts: '**/target/*.war'
                 }
             }
-
-        }
-        stage('Deploy to Staging'){
-            steps{
-                build job: 'deploy-to-stageenv'
-            }
         }
 
-        stage('Deploy to Production')
-        {
-            steps{
-                timeout(time:5, unit: 'DAYS'){
-                    input message: 'Approve PRODUCTION DEPLOYMENT?'
+        stage ('Deployments'){
+            parallel{
+                stage ('Deploy to Staging'){
+                    steps {
+                        sh "scp -i /c/Users/91956/Desktop/gkey.pem **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat/webapps"
+                    }
                 }
-                build job: 'deploy-to-prodenv'
-            }
-            post{
-                success{
-                    echo 'The PROD build is successful'
-                }
-                failure{
-                    echo 'The deployment to PROD failed'
-                }
-            
-            }
 
+                stage ("Deploy to Production"){
+                    steps {
+                        sh "scp -i /c/Users/91956/Desktop/gkey.pem **/target/*.war ec2-user@${params.tomcat_prod}:/var/lib/tomcat/webapps"
+                    }
+                }
+            }
         }
     }
 }
