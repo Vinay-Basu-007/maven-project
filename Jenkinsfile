@@ -1,44 +1,20 @@
-pipeline {
-    agent any
-
-    parameters {
-         string(name: 'tomcat_dev', defaultValue: '34.207.168.241', description: 'Staging Server')
-         string(name: 'tomcat_prod', defaultValue: '54.197.208.42', description: 'Production Server')
-    }
-
-    triggers {
-         pollSCM('* * * * *')
-     }
-
-stages{
-        stage('Build'){
-            steps {
+pipeline{
+     agent any
+    stages{
+        stage('build'){
+            steps{
+                echo "building..."
                 bat 'mvn clean package'
             }
-            post {
-                success {
-                    echo 'Now Archiving...'
+            post{
+                success{
+                    echo "Now Archiving"
                     archiveArtifacts artifacts: '**/target/*.war'
                 }
             }
-        }
 
-        stage ('Deployments'){
-            parallel{
-                stage ('Deploy to Staging'){
-                    steps {
-                    
-                      echo "Copying the artifact"                        
-                      bat "scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i gkey.pem **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat/webapps"
-                    }
-                }
-
-                stage ("Deploy to Production"){
-                    steps {
-                        scp "-i gkey.pem **/target/*.war ec2-user@${params.tomcat_prod}:/var/lib/tomcat/webapps"
-                    }
-                }
-            }
         }
     }
+
+
 }
