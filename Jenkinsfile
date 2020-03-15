@@ -33,7 +33,7 @@ pipeline{
                 success{
                     echo 'The PROD build is successful'
                 }
-                error{
+                failure{
                     echo 'The deployment to PROD failed'
                 }
             
