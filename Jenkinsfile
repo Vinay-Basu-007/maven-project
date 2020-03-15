@@ -27,8 +27,9 @@ stages{
             parallel{
                 stage ('Deploy to Staging'){
                     steps {
-                        
-                      bat  "scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i gkey.pem**/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat/webapps"
+                    
+                      echo "Copying the artifact"                        
+                      bat "scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i gkey.pem **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat/webapps"
                     }
                 }
 
